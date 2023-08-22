@@ -9,6 +9,27 @@ import (
 type Move byte
 
 const (
+	Win  Move = 'Z'
+	Draw Move = 'Y'
+	Lose Move = 'X'
+)
+
+// Complimentary moves to play by the cheatbook
+const (
+	RockWin  = PaperPlayer
+	RockDraw = RockPlayer
+	RockLose = ScissorsPlayer
+
+	PaperWin  = ScissorsPlayer
+	PaperDraw = PaperPlayer
+	PaperLose = RockPlayer
+
+	ScissorWin  = RockPlayer
+	ScissorDraw = ScissorsPlayer
+	ScissorLose = PaperPlayer
+)
+
+const (
 	RockOpponent     Move = 'A'
 	PaperOpponent    Move = 'B'
 	ScissorsOpponent Move = 'C'
@@ -70,19 +91,19 @@ func main() {
 	var totalPointage int16 = 0
 
 	for i := range turns {
-		totalPointage += getPoints(turns[i])
+		//cheatMove(&turns[i])
+		totalPointage += getPoints(&turns[i])
 	}
 
 	println("Total pointage :", totalPointage)
 
 }
 
-func getPoints(turn Turn) int16 {
+func getPoints(turn *Turn) int16 {
 	var baseLinePoints int16 = 0
 	switch turn.playerMove {
 	case RockPlayer:
 		baseLinePoints += 1
-		// Draw case
 		if turn.opponentMove == RockOpponent {
 			baseLinePoints += 3
 		} else if turn.opponentMove == ScissorsOpponent {
@@ -111,4 +132,43 @@ func getPoints(turn Turn) int16 {
 		}
 	}
 	return baseLinePoints
+}
+
+func cheatMove(turn *Turn) {
+	switch turn.playerMove {
+	case Win:
+		if turn.opponentMove == RockOpponent {
+			// This is excplicitly dereferrencing the turn, but Go does that automagically
+			// So there is no need to do it. Fun!
+			(*turn).playerMove = RockWin
+		}
+		if turn.opponentMove == PaperOpponent {
+			turn.playerMove = PaperWin
+		}
+		if turn.opponentMove == ScissorsOpponent {
+			turn.playerMove = ScissorWin
+		}
+	case Draw:
+		if turn.opponentMove == RockOpponent {
+			turn.playerMove = RockDraw
+		}
+		if turn.opponentMove == PaperOpponent {
+			turn.playerMove = PaperDraw
+		}
+		if turn.opponentMove == ScissorsOpponent {
+			turn.playerMove = ScissorDraw
+		}
+
+	case Lose:
+		if turn.opponentMove == RockOpponent {
+			turn.playerMove = RockLose
+		}
+		if turn.opponentMove == PaperOpponent {
+			turn.playerMove = PaperLose
+		}
+		if turn.opponentMove == ScissorsOpponent {
+			turn.playerMove = ScissorLose
+		}
+
+	}
 }
