@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"strings"
 )
 
 type compartment string
@@ -39,17 +40,50 @@ func main() {
 	var buf []string
 	readFileToBuf("input.txt", &buf)
 
+	// Im lazy
 	scoremap := generateScoreMap()
 
+	security_group := make([]Rucksack, 0, 100)
+
 	var score int = 0
+	var badge_score int = 0
 	for i := 0; i < len(buf); i++ {
 		sack := createRucksack(&buf[i])
-		mathched_compartment_types := matchItems(&sack)
-		score += (scoreMatches(&mathched_compartment_types, &scoremap))
+		security_group = append(security_group, sack)
+		matched_compartment_types := matchItems(&[]string{string(sack.first_compartment), string(sack.second_compartment)})
+		score += (scoreMatches(&matched_compartment_types, &scoremap))
+
+		// Create a new group every 3 rucksacks
+		if (i+1)%3 == 0 {
+			secretkey := getSecretKey(&security_group)
+			println("Group: ", i/3+1, " has a secret key of :", secretkey)
+			badge_score += (scoreMatches(&secretkey, &scoremap))
+			// Reset the group
+			security_group = nil
+		}
 	}
 
+	println("Badge score: ", badge_score)
 	print(score)
 
+}
+
+func getSecretKey(security_group *[]Rucksack) string {
+
+	var contents []string
+	for i := range *security_group {
+		content := getRuckSackContent(&(*security_group)[i])
+		contents = append(contents, content)
+	}
+
+	secretKey := matchItems(&contents)
+
+	return secretKey
+}
+
+func getRuckSackContent(sack *Rucksack) string {
+	content := string(sack.first_compartment) + string(sack.second_compartment)
+	return content
 }
 
 func generateScoreMap() map[string]int {
@@ -73,30 +107,33 @@ func createRucksack(buf *string) Rucksack {
 	return rucksack
 }
 
-func matchItems(rucksack *Rucksack) map[string]int {
-	matched_types := make(map[string]int)
+func matchItems(str *[]string) string {
+	if len(*str) == 0 {
+		return ""
+	}
 
-	// Making two maps would be a way to make this O(n) instead of O(n^2)
-	for i := range rucksack.first_compartment {
-		for j := range rucksack.second_compartment {
-			if rucksack.first_compartment[i] == rucksack.second_compartment[j] {
-				_, found := matched_types[string(rucksack.first_compartment[i])]
-				if !found {
-					matched_types[string(rucksack.first_compartment[i])] = i
-				}
+	firstStr := (*str)[0]
+
+	for _, char := range firstStr {
+		common := true
+
+		for i := 1; i < len(*str); i++ {
+			if !strings.ContainsRune((*str)[i], char) {
+				common = false
+				break
 			}
 		}
+
+		if common {
+			return string(char)
+		}
 	}
-	return matched_types
+
+	return ""
 }
 
-func scoreMatches(mathed_types *map[string]int, scores *map[string]int) int {
+func scoreMatches(match *string, scores *map[string]int) int {
 
-	var result int
-	for key := range *mathed_types {
-		result = (*scores)[key]
-	}
-
-	return result
+	return (*scores)[*match]
 
 }
